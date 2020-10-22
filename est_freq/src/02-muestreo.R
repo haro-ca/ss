@@ -3,13 +3,14 @@ library(tidyverse)
 library(patchwork)
 
 # Lectura ====
-poblacion <- read_csv('data/raw/poblacion.csv')
+poblacion <- read_csv('est_freq/data/raw/poblacion.csv')
 
 # Muestrea ====
 vec_media <- poblacion %>%
      slice_sample(n = 90) %>%
      summarise(mean_y = mean(y)) %>%
      pull()
+
 vec_sd <- poblacion %>%
      slice_sample(n = 90) %>%
      summarise(sd_y = sd(y)) %>%
@@ -32,6 +33,10 @@ poblacion %>%
      summarise(mean(y))
 
 # Media
+desv_est <- poblacion %>%
+     slice_sample(n = 90) %>%
+     summarise(sd_y = sd(y)) %>%
+     pull()
 desv_est <- poblacion %>%
      slice_sample(n = 90) %>%
      summarise(sd_y = sd(y)) %>%

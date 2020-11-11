@@ -2,11 +2,11 @@
 library(tidyverse)
 
 # Población ====
-poblacion <- tibble(x = 1:200) %>%
-     mutate(error = 10e5 * runif(n(), 0, 20),
+poblacion <- tibble(x = runif(1000, 0, 10)) %>%
+     mutate(error = 10 * runif(n(), -10, 10),
             y = 1 + exp(0.5 * x) + error) %>%
      relocate(y) %>%
-     write_csv('est_freq/data/raw/poblacion.csv')
+     write_csv('data/raw/poblacion.csv')
 
 # Revisión de la función
 poblacion %>%

@@ -28,9 +28,9 @@ lm_fit <-
      lm_model %>% 
      fit(ingreso ~ educacion, data = poblacion)
 
-
-predict(lm_fit, new_data = tibble(educacion = 20))
-
+poblacion %>% 
+        ggplot() +
+        geom_histogram(aes(ingreso))
 # CEF 
 cef <- poblacion %>% 
      mutate(educacion = factor(educacion)) %>% 
@@ -61,10 +61,40 @@ poblacion %>%
      scale_fill_viridis(option = "magma") +
      coord_flip()
 
-gg2 <- poblacion %>% 
-     ggplot(aes(y = ingreso, x = educacion)) +
-     geom_point() +
-     geom_smooth(method = 'lm')
 
-library(patchwork)
-gg1 / gg2
+# CEF no lineal
+diamonds_binned <- diamonds %>% 
+                    mutate(carat_bins = santoku::chop(carat, breaks = seq(0, 5.01, by = 0.2)))
+
+lm_fit <- 
+     lm_model %>% 
+     fit(price ~ carat_bins,
+         data = diamonds %>% 
+                 mutate(carat_bins = santoku::chop(carat, breaks = seq(0, 5.01, by = 0.2)))) 
+
+lm_data <- predict(lm_fit, new_data = diamonds_binned %>% summarise(carat_bins = levels(carat_bins))) %>% 
+             bind_cols(diamonds_binned %>% summarise(carat_bins = levels(carat_bins))) %>% 
+             rename(price = .pred)
+
+cef_binned <- diamonds %>% 
+        mutate(carat_bins = santoku::chop(carat, breaks = seq(0, 5.01, by = 0.2))) %>% 
+        group_by(carat_bins) %>% 
+        summarise(price = mean(price))
+
+diamonds %>% 
+        mutate(carat_bins = santoku::chop(carat, breaks = seq(0, 5.01, by = 0.2))) %>% 
+        ggplot(aes(x = price, y = carat_bins)) +
+        ggridges::geom_density_ridges_gradient(aes(fill = stat(x)), 
+                                   alpha = 0.2) +
+        geom_path(group = 1, color = 'grey', data = cef_binned, size = 1.2) +
+        geom_point(color = 'grey', size = 1.2, data = cef_binned) +
+        geom_path(group = 1, color = 'red', data = lm_data) +
+        scale_fill_viridis(option = "magma") +
+        coord_flip()
+
+diamonds %>% 
+        ggplot(aes(y = price, x = carat)) +
+        geom_point() +
+        geom_smooth(method = 'lm') 
+
+

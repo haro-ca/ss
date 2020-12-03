@@ -1,0 +1,97 @@
+---
+title: "Nómina federal"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+ 
+params: 
+     pass: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(DBI)
+```
+
+```{r}
+nomina <- read_csv(here::here('data/raw/shcp_nomina.csv')) %>% 
+     janitor::clean_names()
+
+con <- dbConnect(RSQLite::SQLite(), dbname = ":memory:", 
+                 user = 'caharolopez', 
+                 password = params$pass)
+copy_to(con, nomina)
+```
+
+# Primera forma
+```{r}
+nomina_query <- dbGetQuery(con, 'SELECT * FROM nomina') %>% 
+     tibble()
+```
+
+# Segunda forma
+```{r}
+# library(dplyr) # ya está cargada por library(tidyverse)
+nomina_tbl <- tbl(con, 'nomina')
+
+nomina_en_db <- nomina_tbl %>% 
+     select(-no) %>% 
+     filter(sueldo_bruto_mensual > 10e3) %>% 
+     collect()
+
+nomina_en_db %>% 
+     ggplot() + 
+     geom_boxplot(aes(sueldo_bruto_mensual))
+```
+
+# Tercera forma
+```{sql connection=con, output.var="nomina_anapau"}
+SELECT nombre_completo FROM nomina
+```
+
+# Base real
+```{r}
+dbDisconnect()
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "publicdata",
+  dataset = "samples",
+  billing = 'vigilant-sol-292615'
+)
+
+db_list_tables(con)
+
+
+
+natalidad <- tbl(con, 'natality')
+
+bebes <- natalidad %>% 
+     group_by(source_year) %>% 
+     summarise(n = n()) %>% 
+     collect()
+
+bebes %>% 
+     arrange(desc(source_year)) %>% 
+     ggplot() +
+     geom_line(aes(source_year, n)) 
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
